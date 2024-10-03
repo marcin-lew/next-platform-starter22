@@ -1,0 +1,58 @@
+name: Download Images
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  download_images:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+
+      - name: Download images
+        run: |
+          import os
+          import json
+          import requests
+
+          # Tworzymy katalog public/images, jeśli nie istnieje
+          if not os.path.exists('public/images'):
+              os.makedirs('public/images')
+
+          # Ładujemy plik products.json
+          with open('data/products.json', 'r', encoding='utf-8') as f:
+              products = json.load(f)
+
+          # Pobieramy każdy obraz i zapisujemy go w public/images
+          for product in products:
+              image_url = product.get("images 1")
+              if image_url:
+                  response = requests.get(image_url)
+                  image_name = product.get("name").replace(" ", "_")[:30] + ".jpg"
+                  with open(f'public/images/{image_name}', 'wb') as img_file:
+                      img_file.write(response.content)
+                      print(f"Pobrano: {image_name}")
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add public/images
+          git commit -m "Dodano pobrane obrazy do public/images"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
