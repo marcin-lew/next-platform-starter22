@@ -1,3 +1,5 @@
+"use client";  // Dodaj to na początku pliku
+
 import { useState, useEffect } from 'react';
 
 export default function ProductsPage() {
